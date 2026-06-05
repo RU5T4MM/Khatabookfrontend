@@ -156,14 +156,14 @@ const AdminPanel = () => {
     <div className="space-y-8 animate-fade-in">
       
       {/* Title */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-800 dark:text-dark-50">Admin Control Center</h2>
           <p className="text-xs text-slate-400 font-semibold uppercase">Review database registers and merchant plans</p>
         </div>
         <button
           onClick={loadAdminData}
-          className="btn-secondary py-2 px-3 flex items-center gap-1.5 text-xs font-bold"
+          className="btn-secondary py-2 px-3 flex items-center justify-center gap-1.5 text-xs font-bold w-full sm:w-auto"
         >
           <RefreshCw className="w-4 h-4 text-slate-500" />
           Refresh Stats
@@ -177,7 +177,7 @@ const AdminPanel = () => {
       ) : (
         <>
           {/* Top Metrics Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             <div className="glass-card p-5 bg-slate-50/40">
               <span className="text-[9px] font-black text-slate-400 block uppercase">Total Merchants</span>
               <strong className="text-xl font-black text-slate-800 dark:text-dark-50">{metrics?.totalUsers || 0}</strong>
@@ -255,21 +255,22 @@ const AdminPanel = () => {
 
           {/* User grid table directory */}
           <div className="space-y-4 pt-4 border-t">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base">Registered Merchants Directory</h3>
-              <div className="relative w-64">
+              <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input-field pl-9 py-1.5 text-xs"
+                  className="input-field pl-9 py-1.5 text-xs w-full"
                   placeholder="Search user email / owner / phone..."
                 />
               </div>
             </div>
 
-            <div className="glass-card overflow-hidden">
+            {/* Desktop Table View (Hidden on mobile/tablet) */}
+            <div className="hidden md:block glass-card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
@@ -316,29 +317,31 @@ const AdminPanel = () => {
                               {u.isBlocked ? 'BLOCKED' : 'ACTIVE'}
                             </span>
                           </td>
-                          <td className="p-4 text-center flex items-center justify-center gap-2 mt-1">
-                            {/* Override plans */}
-                            <button
-                              onClick={() => handleChangePlan(u._id, u.subscription?.plan)}
-                              className="btn-secondary py-1 px-2.5 text-[9px] font-bold flex items-center gap-1"
-                              title="Toggle manual upgrade"
-                            >
-                              <Award className="w-3.5 h-3.5 text-amber-500" />
-                              Plan Toggle
-                            </button>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              {/* Override plans */}
+                              <button
+                                onClick={() => handleChangePlan(u._id, u.subscription?.plan)}
+                                className="btn-secondary py-1 px-2.5 text-[9px] font-bold flex items-center gap-1"
+                                title="Toggle manual upgrade"
+                              >
+                                <Award className="w-3.5 h-3.5 text-amber-500" />
+                                Plan Toggle
+                              </button>
 
-                            {/* Block Toggle */}
-                            <button
-                              onClick={() => handleToggleBlock(u._id, u.isBlocked)}
-                              className={`p-1.5 rounded-xl border transition-colors ${
-                                u.isBlocked
-                                  ? 'border-emerald-100 hover:bg-emerald-50 text-emerald-600 dark:border-emerald-950/20 dark:hover:bg-emerald-950/30'
-                                  : 'border-rose-100 hover:bg-rose-50 text-rose-500 dark:border-rose-950/20 dark:hover:bg-rose-950/30'
-                              }`}
-                              title={u.isBlocked ? 'Unblock User' : 'Block User'}
-                            >
-                              {u.isBlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                            </button>
+                              {/* Block Toggle */}
+                              <button
+                                onClick={() => handleToggleBlock(u._id, u.isBlocked)}
+                                className={`p-1.5 rounded-xl border transition-colors ${
+                                  u.isBlocked
+                                    ? 'border-emerald-100 hover:bg-emerald-50 text-emerald-600 dark:border-emerald-950/20 dark:hover:bg-emerald-950/30'
+                                    : 'border-rose-100 hover:bg-rose-50 text-rose-500 dark:border-rose-950/20 dark:hover:bg-rose-950/30'
+                                }`}
+                                title={u.isBlocked ? 'Unblock User' : 'Block User'}
+                              >
+                                {u.isBlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -346,6 +349,84 @@ const AdminPanel = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Mobile/Tablet Card View */}
+            <div className="md:hidden grid grid-cols-1 gap-4">
+              {filteredUsers.length === 0 ? (
+                <div className="glass-card p-8 text-center text-slate-400 font-semibold uppercase">
+                  No users registered in directory
+                </div>
+              ) : (
+                filteredUsers.map(u => (
+                  <div key={u._id} className="glass-card p-5 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-extrabold text-sm text-slate-800 dark:text-dark-50">{u.businessName}</h4>
+                        <span className="text-[10px] text-slate-400 uppercase font-semibold">Owner: {u.ownerName}</span>
+                      </div>
+                      <div className="flex flex-col gap-1.5 items-end">
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                          u.subscription?.plan === 'premium'
+                            ? 'bg-emerald-50 border border-emerald-200/50 text-emerald-600 dark:bg-emerald-950/20 dark:border-emerald-900/30'
+                            : 'bg-slate-100 border border-slate-200 text-slate-500 dark:bg-dark-850 dark:border-dark-800'
+                        }`}>
+                          {u.subscription?.plan === 'premium' ? 'PREMIUM PRO' : 'FREE BASIC'}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                          u.isBlocked
+                            ? 'bg-rose-50 border border-rose-200/50 text-rose-600 dark:bg-rose-950/20 dark:border-rose-900/30'
+                            : 'bg-emerald-50 border border-emerald-200/50 text-emerald-600 dark:bg-emerald-950/20 dark:border-emerald-900/30'
+                        }`}>
+                          {u.isBlocked ? 'BLOCKED' : 'ACTIVE'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-50 dark:border-dark-850 py-3">
+                      <div>
+                        <span className="text-[9px] text-slate-400 uppercase font-semibold block">Email</span>
+                        <span className="font-medium text-slate-700 dark:text-dark-200 break-all">{u.email}</span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-slate-400 uppercase font-semibold block">Mobile</span>
+                        <span className="font-semibold text-slate-700 dark:text-dark-200">{u.phone}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleChangePlan(u._id, u.subscription?.plan)}
+                        className="btn-secondary py-2 text-xs font-bold flex-1 flex items-center justify-center gap-1.5"
+                      >
+                        <Award className="w-4 h-4 text-amber-500" />
+                        Plan Toggle
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleBlock(u._id, u.isBlocked)}
+                        className={`py-2 px-3 rounded-xl border transition-colors flex items-center justify-center ${
+                          u.isBlocked
+                            ? 'border-emerald-100 hover:bg-emerald-50 text-emerald-600 dark:border-emerald-950/20 dark:hover:bg-emerald-950/30 bg-emerald-50/20'
+                            : 'border-rose-100 hover:bg-rose-50 text-rose-500 dark:border-rose-950/20 dark:hover:bg-rose-950/30 bg-rose-50/20'
+                        }`}
+                      >
+                        {u.isBlocked ? (
+                          <>
+                            <Unlock className="w-4 h-4 mr-1" />
+                            <span className="text-xs font-bold">Unblock</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4 mr-1" />
+                            <span className="text-xs font-bold">Block</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>
