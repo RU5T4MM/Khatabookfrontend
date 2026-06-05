@@ -45,10 +45,6 @@ const Expenses = () => {
   const [endDate, setEndDate] = useState('');
 
   const loadExpenseData = async () => {
-    if (user?.subscription?.plan !== 'premium') {
-      setLoading(false);
-      return;
-    }
     try {
       setLoading(true);
       // Fetch list
@@ -85,29 +81,7 @@ const Expenses = () => {
     loadExpenseData();
   }, [filterCategory, startDate, endDate, user]);
 
-  // Block page if Free tier
-  if (user?.subscription?.plan !== 'premium') {
-    return (
-      <div className="max-w-xl mx-auto py-12 px-4 text-center space-y-6 animate-fade-in">
-        <div className="w-20 h-20 bg-amber-50 dark:bg-amber-950/20 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-md">
-          <Lock className="w-10 h-10" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black text-slate-800 dark:text-dark-50">Expense Analysis is Premium</h2>
-          <p className="text-sm text-slate-500 dark:text-dark-400">
-            Track business operating costs, organize overheads by category, and access visual graphs by upgrading to Premium Pro.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate('/settings')}
-          className="btn-primary mx-auto flex items-center gap-2"
-        >
-          <Sparkles className="w-4 h-4 fill-white" />
-          View Subscription Plans
-        </button>
-      </div>
-    );
-  }
+  // No premium locks for Expenses
 
   const handleAddExpense = async (e) => {
     e.preventDefault();

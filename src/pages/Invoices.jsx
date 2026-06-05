@@ -35,10 +35,6 @@ const Invoices = () => {
 
   // Fetch past invoices
   const loadInvoices = async () => {
-    if (user?.subscription?.plan !== 'premium') {
-      setLoading(false);
-      return;
-    }
     try {
       const res = await fetchWithAuth('/api/invoices');
       if (res.ok) {
@@ -56,29 +52,7 @@ const Invoices = () => {
     loadInvoices();
   }, [user]);
 
-  // Block page if free tier
-  if (user?.subscription?.plan !== 'premium') {
-    return (
-      <div className="max-w-xl mx-auto py-12 px-4 text-center space-y-6 animate-fade-in">
-        <div className="w-20 h-20 bg-amber-50 dark:bg-amber-950/20 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-md">
-          <Lock className="w-10 h-10" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black text-slate-800 dark:text-dark-50">GST Invoicing is Premium</h2>
-          <p className="text-sm text-slate-500 dark:text-dark-400">
-            Upgrade your store to the Premium Pro plan to generate custom GST-compliant bills, print invoices, and record details.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate('/settings')}
-          className="btn-primary mx-auto flex items-center gap-2"
-        >
-          <Sparkles className="w-4 h-4 fill-white" />
-          View Subscription Plans
-        </button>
-      </div>
-    );
-  }
+  // No premium locks for Invoices
 
   // Row item actions
   const handleAddItemRow = () => {
