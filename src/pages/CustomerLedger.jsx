@@ -176,7 +176,19 @@ const CustomerLedger = () => {
 
       // 1. Business Profile Header (Left-aligned)
       if (logoDataUrl) {
-        doc.addImage(logoDataUrl, 'PNG', 150, 10, 40, 20);
+        try {
+          const imageType = logoDataUrl.includes('image/png')
+            ? 'PNG'
+            : logoDataUrl.includes('image/jpeg') || logoDataUrl.includes('image/jpg')
+            ? 'JPEG'
+            : null;
+
+          if (imageType) {
+            doc.addImage(logoDataUrl, imageType, 150, 10, 40, 20);
+          }
+        } catch (imgError) {
+          console.warn('Failed to add logo to PDF:', imgError);
+        }
       }
 
       doc.setFont('Helvetica', 'bold');
@@ -189,7 +201,8 @@ const CustomerLedger = () => {
       doc.setTextColor(100, 116, 139); // Slate-500
       doc.text(`Proprietor: ${user?.ownerName || 'Nahid'}`, 14, 26);
       doc.text(`Phone: +91 ${user?.phone || '9999999999'}`, 14, 31);
-      doc.text(['Email: groupnahid@gmail.com', 'Nahidgroupmanpower@gmail.com'], 14, 36);
+      doc.text('Email: groupnahid@gmail.com', 14, 36);
+      doc.text('Nahidgroupmanpower@gmail.com', 14, 41);
       
       const bAddress = user?.address || '1st GF 105/211/3, opp. Hotel Deep, beside Navrang Hotel, Husainganj, Lucknow, Uttar Pradesh 226001';
       const splitAddress = doc.splitTextToSize(bAddress, 90);
@@ -273,7 +286,7 @@ const CustomerLedger = () => {
       doc.setTextColor(16, 185, 129); // Emerald-600
       doc.text(`Rs ${totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 74, 107);
 
-      const bal = selectedCust.totalBalance;
+      const bal = Number(selectedCust.totalBalance || 0);
       if (bal >= 0) {
         doc.setTextColor(16, 185, 129);
       } else {
@@ -284,10 +297,10 @@ const CustomerLedger = () => {
       // 4. Transactions Ledger Table
       const tableHeaders = [['Date', 'Description', 'Transaction Type', 'Amount (INR)']];
       const tableData = transactions.map(t => [
-        new Date(t.date).toLocaleDateString(),
+        t.date ? new Date(t.date).toLocaleDateString() : 'N/A',
         t.description || 'Ledger entry log',
         t.type === 'give' ? 'YOU GAVE (DEBIT)' : 'YOU GOT (CREDIT)',
-        `Rs ${t.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+        `Rs ${Number(t.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
       ]);
 
       autoTable(doc, {
