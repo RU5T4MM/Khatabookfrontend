@@ -71,7 +71,7 @@ export const translations = {
     offlineMode: "You are offline. Transactions will sync once online."
   },
   hi: {
-    appName: "खाताबुक",
+    appName: "Nahid Group",
     dashboard: "डैशबोर्ड",
     customers: "ग्राहक",
     expenses: "खर्चे",
@@ -142,7 +142,7 @@ export const translations = {
     offlineMode: "आप ऑफलाइन हैं। ऑनलाइन होने पर डेटा सिंक हो जाएगा।"
   },
   ur: {
-    appName: "کھاتہ بک",
+    appName: "Nahid Group",
     dashboard: "ڈیش بورڈ",
     customers: "گاہک",
     expenses: "اخراجات",

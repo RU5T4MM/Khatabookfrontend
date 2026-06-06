@@ -11,7 +11,8 @@ import {
   Sun,
   Moon,
   Sparkles,
-  Save
+  Save,
+  MapPin
 } from 'lucide-react';
 
 const Settings = () => {
@@ -23,6 +24,7 @@ const Settings = () => {
   const [ownerName, setOwnerName] = useState(user?.ownerName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [address, setAddress] = useState(user?.address || '');
   const [loading, setLoading] = useState(false);
 
   const handleUpdateProfile = async (e) => {
@@ -33,7 +35,7 @@ const Settings = () => {
     }
     setLoading(true);
     try {
-      await updateProfile({ businessName, ownerName, phone, email });
+      await updateProfile({ businessName, ownerName, phone, email, address });
       addNotification('Business profile updated successfully!', 'success');
     } catch (err) {
       addNotification(err.message, 'error');
@@ -209,6 +211,20 @@ const Settings = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="input-field pl-10 text-xs"
                   required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500">Business Address</label>
+              <div className="relative">
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="input-field pl-10 text-xs"
+                  placeholder="E.g., Husainganj, Lucknow"
                 />
               </div>
             </div>

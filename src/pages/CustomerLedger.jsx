@@ -13,17 +13,21 @@ import {
   Send,
   MessageCircle,
   X,
-  UserPlus
+  UserPlus,
+  FileDown
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const CustomerLedger = () => {
-  const { fetchWithAuth, t, addNotification, customers, setCustomers, language } = useApp();
+  const { fetchWithAuth, t, addNotification, customers, setCustomers, language, user } = useApp();
   const { isOnline, saveTransaction, getCachedCustomers, cacheCustomersOffline } = useSync();
 
   const [loading, setLoading] = useState(true);
   const [selectedCust, setSelectedCust] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [logoDataUrl, setLogoDataUrl] = useState(null);
 
   // Modals Toggles
   const [showAddCust, setShowAddCust] = useState(false);
@@ -35,6 +39,29 @@ const CustomerLedger = () => {
   const [custName, setCustName] = useState('');
   const [custPhone, setCustPhone] = useState('');
   const [custEmail, setCustEmail] = useState('');
+
+  useEffect(() => {
+    const loadLogo = async () => {
+      try {
+        const response = await fetch('/nahid-logo.png');
+        if (!response.ok) return;
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoDataUrl(reader.result);
+        reader.readAsDataURL(blob);
+      } catch (err) {
+        console.warn('Failed to load logo for PDF export', err);
+      }
+    };
+
+    loadLogo();
+  }, []);
+  const [custAddress, setCustAddress] = useState('');
+  const [custCity, setCustCity] = useState('');
+  const [custState, setCustState] = useState('');
+  const [custCountry, setCustCountry] = useState('India');
+  const [custPincode, setCustPincode] = useState('');
+  const [custNotes, setCustNotes] = useState('');
 
   const [txAmount, setTxAmount] = useState('');
   const [txDesc, setTxDesc] = useState('');
@@ -98,7 +125,17 @@ const CustomerLedger = () => {
     try {
       const res = await fetchWithAuth('/api/customers', {
         method: 'POST',
-        body: JSON.stringify({ name: custName, phone: custPhone, email: custEmail })
+        body: JSON.stringify({ 
+          name: custName, 
+          phone: custPhone, 
+          email: custEmail,
+          address: custAddress,
+          city: custCity,
+          state: custState,
+          country: custCountry,
+          pincode: custPincode,
+          notes: custNotes
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to add customer');
@@ -110,10 +147,189 @@ const CustomerLedger = () => {
       setCustName('');
       setCustPhone('');
       setCustEmail('');
+      setCustAddress('');
+      setCustCity('');
+      setCustState('');
+      setCustCountry('India');
+      setCustPincode('');
+      setCustNotes('');
       setShowAddCust(false);
       setSelectedCust(data);
     } catch (err) {
       addNotification(err.message, 'error');
+    }
+  };
+
+  // Generate PDF handler
+  const handleGeneratePDF = () => {
+    if (!selectedCust) return;
+
+    try {
+      const doc = new jsPDF();
+
+      // Set document properties
+      doc.setProperties({
+        title: `${selectedCust.name} Account Statement`,
+        subject: 'Nahid Group Ledger Statement',
+        author: user?.businessName || 'Nahid Group',
+      });
+
+      // 1. Business Profile Header (Left-aligned)
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', 150, 10, 40, 20);
+      }
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(16, 185, 129); // Emerald color
+      doc.text(user?.businessName || 'Nahid Group', 14, 20);
+
+      doc.setFontSize(9);
+      doc.setFont('Helvetica', 'normal');
+      doc.setTextColor(100, 116, 139); // Slate-500
+      doc.text(`Proprietor: ${user?.ownerName || 'Nahid'}`, 14, 26);
+      doc.text(`Phone: +91 ${user?.phone || '9999999999'}`, 14, 31);
+      doc.text(['Email: groupnahid@gmail.com', 'Nahidgroupmanpower@gmail.com'], 14, 36);
+      
+      const bAddress = user?.address || '1st GF 105/211/3, opp. Hotel Deep, beside Navrang Hotel, Husainganj, Lucknow, Uttar Pradesh 226001';
+      const splitAddress = doc.splitTextToSize(bAddress, 90);
+      doc.text(splitAddress, 14, 48);
+
+      // Statement Metadata (Right-aligned)
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(30, 41, 59); // Slate-800
+      doc.setFontSize(12);
+      doc.text('CUSTOMER ACCOUNT STATEMENT', 120, 20);
+      
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Statement Date: ${new Date().toLocaleDateString()}`, 120, 26);
+      doc.text(`Status: Active Record`, 120, 31);
+
+      // Add a horizontal rule
+      doc.setDrawColor(226, 232, 240); // Slate-200
+      doc.setLineWidth(0.5);
+      doc.line(14, 52, 196, 52);
+
+      // 2. Customer Info block (Two-column layout)
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text('CUSTOMER INFORMATION', 14, 60);
+      
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Full Name: ${selectedCust.name}`, 14, 66);
+      doc.text(`Mobile Number: +91 ${selectedCust.phone}`, 14, 71);
+      doc.text(`Email Address: ${selectedCust.email || 'N/A'}`, 14, 76);
+
+      // Client Address (Right side column)
+      const cAddr = [
+        selectedCust.address,
+        selectedCust.city,
+        selectedCust.state,
+        selectedCust.pincode,
+        selectedCust.country
+      ].filter(Boolean).join(', ');
+      
+      const splitCAddr = doc.splitTextToSize(`Address: ${cAddr || 'N/A'}`, 80);
+      doc.text(splitCAddr, 115, 66);
+      
+      if (selectedCust.notes) {
+        doc.text(`Notes: ${selectedCust.notes}`, 115, 78);
+      }
+
+      // Add another divider
+      doc.line(14, 85, 196, 85);
+
+      // 3. Outstanding Balances Summary
+      let totalCredit = 0; // got
+      let totalDebit = 0;  // give
+      
+      transactions.forEach(t => {
+        if (t.type === 'got') totalCredit += t.amount;
+        else if (t.type === 'give') totalDebit += t.amount;
+      });
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(30, 41, 59);
+      doc.text('STATEMENT FINANCIAL SUMMARY', 14, 93);
+
+      doc.setFontSize(8.5);
+      doc.setFont('Helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text('Total Debit (You Gave)', 14, 100);
+      doc.text('Total Credit (You Got)', 74, 100);
+      doc.text('Current Balance', 134, 100);
+
+      doc.setFontSize(11);
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(239, 68, 68); // Red-500
+      doc.text(`Rs ${totalDebit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 14, 107);
+      
+      doc.setTextColor(16, 185, 129); // Emerald-600
+      doc.text(`Rs ${totalCredit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 74, 107);
+
+      const bal = selectedCust.totalBalance;
+      if (bal >= 0) {
+        doc.setTextColor(16, 185, 129);
+      } else {
+        doc.setTextColor(239, 68, 68);
+      }
+      doc.text(`Rs ${bal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 134, 107);
+
+      // 4. Transactions Ledger Table
+      const tableHeaders = [['Date', 'Description', 'Transaction Type', 'Amount (INR)']];
+      const tableData = transactions.map(t => [
+        new Date(t.date).toLocaleDateString(),
+        t.description || 'Ledger entry log',
+        t.type === 'give' ? 'YOU GAVE (DEBIT)' : 'YOU GOT (CREDIT)',
+        `Rs ${t.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+      ]);
+
+      autoTable(doc, {
+        head: tableHeaders,
+        body: tableData,
+        startY: 115,
+        theme: 'striped',
+        headStyles: { fillColor: [15, 23, 42], halign: 'left' }, // slate-900
+        columnStyles: {
+          0: { cellWidth: 35 },
+          1: { cellWidth: 'auto' },
+          2: { cellWidth: 45 },
+          3: { cellWidth: 40, halign: 'right' }
+        },
+        styles: { fontSize: 8.5 },
+        didParseCell: (data) => {
+          if (data.column.index === 2) {
+            if (data.cell.text[0] === 'YOU GAVE (DEBIT)') {
+              data.cell.styles.textColor = [239, 68, 68]; // Red-500
+            } else {
+              data.cell.styles.textColor = [16, 185, 129]; // Emerald-600
+            }
+          }
+        }
+      });
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text(`Page ${i} of ${pageCount}`, 14, 287);
+        doc.text('Generated via Nahid Group Business Ledger', 130, 287);
+      }
+
+      doc.save(`${selectedCust.name}_statement.pdf`);
+      addNotification('Statement PDF generated successfully!', 'success');
+    } catch (e) {
+      console.error(e);
+      addNotification('Failed to generate PDF statement', 'error');
     }
   };
 
@@ -307,6 +523,14 @@ const CustomerLedger = () => {
                   </span>
                 </div>
 
+                <button
+                  onClick={handleGeneratePDF}
+                  className="flex items-center justify-center p-3 rounded-2xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all dark:bg-blue-950/30 dark:text-blue-500"
+                  title="Generate Account PDF Statement"
+                >
+                  <FileDown className="w-5 h-5" />
+                </button>
+
                 {selectedCust.totalBalance > 0 && (
                   <a
                     href={getWhatsAppReminderUrl(selectedCust)}
@@ -320,6 +544,25 @@ const CustomerLedger = () => {
                 )}
               </div>
             </div>
+
+            {/* Customer Details info strip */}
+            {(selectedCust.address || selectedCust.city || selectedCust.notes) && (
+              <div className="px-6 py-2.5 bg-slate-50/60 dark:bg-dark-850/20 border-b border-slate-100 dark:border-dark-800/80 flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-slate-500 dark:text-dark-300">
+                {selectedCust.address && (
+                  <div>
+                    <span className="font-bold text-slate-400">Address:</span> {selectedCust.address}
+                    {selectedCust.city && `, ${selectedCust.city}`}
+                    {selectedCust.state && `, ${selectedCust.state}`}
+                    {selectedCust.pincode && ` - ${selectedCust.pincode}`}
+                  </div>
+                )}
+                {selectedCust.notes && (
+                  <div>
+                    <span className="font-bold text-slate-400">Notes:</span> {selectedCust.notes}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Transactions items list */}
             <div className="flex-1 p-6 overflow-y-auto space-y-4">
@@ -419,49 +662,117 @@ const CustomerLedger = () => {
       {/* ==================== 1. MODAL: ADD CUSTOMER ==================== */}
       {showAddCust && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 max-w-sm w-full space-y-4 animate-scale-in">
+          <div className="bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 max-w-md w-full space-y-4 animate-scale-in">
             <div className="flex justify-between items-center">
               <h3 className="font-black text-slate-800 dark:text-dark-50 text-base">{t.addCustomer}</h3>
               <button onClick={() => setShowAddCust(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-500"><X className="w-5 h-5" /></button>
             </div>
 
-            <form onSubmit={handleAddCustomer} className="space-y-4">
+            <form onSubmit={handleAddCustomer} className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500">{t.customerName}</label>
+                <label className="text-xs font-bold text-slate-500">Full Name</label>
                 <input
                   type="text"
                   value={custName}
                   onChange={(e) => setCustName(e.target.value)}
-                  className="input-field text-sm"
+                  className="input-field text-xs py-1.5"
                   placeholder="Ramesh Verma"
                   required
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500">{t.phoneNumber}</label>
-                <input
-                  type="tel"
-                  value={custPhone}
-                  onChange={(e) => setCustPhone(e.target.value)}
-                  className="input-field text-sm"
-                  placeholder="9876543210"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Mobile Number</label>
+                  <input
+                    type="tel"
+                    value={custPhone}
+                    onChange={(e) => setCustPhone(e.target.value)}
+                    className="input-field text-xs py-1.5"
+                    placeholder="9876543210"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Email Address</label>
+                  <input
+                    type="email"
+                    value={custEmail}
+                    onChange={(e) => setCustEmail(e.target.value)}
+                    className="input-field text-xs py-1.5"
+                    placeholder="customer@email.com"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500">{t.emailAddress}</label>
+                <label className="text-xs font-bold text-slate-500">Complete Address</label>
                 <input
-                  type="email"
-                  value={custEmail}
-                  onChange={(e) => setCustEmail(e.target.value)}
-                  className="input-field text-sm"
-                  placeholder="customer@email.com"
+                  type="text"
+                  value={custAddress}
+                  onChange={(e) => setCustAddress(e.target.value)}
+                  className="input-field text-xs py-1.5"
+                  placeholder="Street name, landmark..."
                 />
               </div>
 
-              <button type="submit" className="w-full btn-primary">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">City</label>
+                  <input
+                    type="text"
+                    value={custCity}
+                    onChange={(e) => setCustCity(e.target.value)}
+                    className="input-field text-xs py-1.5"
+                    placeholder="Lucknow"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">State</label>
+                  <input
+                    type="text"
+                    value={custState}
+                    onChange={(e) => setCustState(e.target.value)}
+                    className="input-field text-xs py-1.5"
+                    placeholder="Uttar Pradesh"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Pincode</label>
+                  <input
+                    type="text"
+                    value={custPincode}
+                    onChange={(e) => setCustPincode(e.target.value)}
+                    className="input-field text-xs py-1.5"
+                    placeholder="226001"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Country</label>
+                  <input
+                    type="text"
+                    value={custCountry}
+                    onChange={(e) => setCustCountry(e.target.value)}
+                    className="input-field text-xs py-1.5"
+                    placeholder="India"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">Notes / Remarks</label>
+                <textarea
+                  value={custNotes}
+                  onChange={(e) => setCustNotes(e.target.value)}
+                  className="input-field text-xs py-1.5 min-h-[60px]"
+                  placeholder="Any extra details, credit limits..."
+                />
+              </div>
+
+              <button type="submit" className="w-full btn-primary mt-2">
                 Add to ledger
               </button>
             </form>

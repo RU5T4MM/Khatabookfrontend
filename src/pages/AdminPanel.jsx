@@ -11,7 +11,8 @@ import {
   Download,
   Upload,
   RefreshCw,
-  Search
+  Search,
+  Trash2
 } from 'lucide-react';
 
 const AdminPanel = () => {
@@ -26,6 +27,57 @@ const AdminPanel = () => {
   // Backup files tracking
   const [backupLog, setBackupLog] = useState('');
   const [restoreFilename, setRestoreFilename] = useState('');
+
+  // User creation state
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newBName, setNewBName] = useState('');
+  const [newOName, setNewOName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [newRole, setNewRole] = useState('user');
+  const [newAddress, setNewAddress] = useState('');
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!newBName || !newOName || !newPhone || !newEmail || !newPass) {
+      addNotification('All fields (except address) are required', 'warning');
+      return;
+    }
+    setCreatingUser(true);
+    try {
+      const res = await fetchWithAuth('/api/admin/users', {
+        method: 'POST',
+        body: JSON.stringify({
+          businessName: newBName,
+          ownerName: newOName,
+          phone: newPhone,
+          email: newEmail,
+          password: newPass,
+          role: newRole,
+          address: newAddress
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to create user');
+
+      addNotification('User created successfully!', 'success');
+      setShowCreateUser(false);
+      setNewBName('');
+      setNewOName('');
+      setNewPhone('');
+      setNewEmail('');
+      setNewPass('');
+      setNewRole('user');
+      setNewAddress('');
+      loadAdminData();
+    } catch (err) {
+      addNotification(err.message, 'error');
+    } finally {
+      setCreatingUser(false);
+    }
+  };
 
   const loadAdminData = async () => {
     if (user?.role !== 'admin') {
@@ -90,6 +142,25 @@ const AdminPanel = () => {
       if (!res.ok) throw new Error(data.message || 'Plan update failed');
 
       addNotification(data.message, 'success');
+      loadAdminData();
+    } catch (err) {
+      addNotification(err.message, 'error');
+    }
+  };
+
+  // Delete user and all their data
+  const handleDeleteUser = async (targetId, businessName) => {
+    const confirmMsg = `⚠️ WARNING: This will permanently delete the merchant "${businessName}" and ALL their associated customers, invoices, expenses, and transactions. This action cannot be undone. Continue?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetchWithAuth(`/api/admin/users/${targetId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Delete failed');
+
+      addNotification(`Merchant "${businessName}" has been permanently deleted.`, 'success');
       loadAdminData();
     } catch (err) {
       addNotification(err.message, 'error');
@@ -161,13 +232,22 @@ const AdminPanel = () => {
           <h2 className="text-2xl font-black text-slate-800 dark:text-dark-50">Admin Control Center</h2>
           <p className="text-xs text-slate-400 font-semibold uppercase">Review database registers and merchant plans</p>
         </div>
-        <button
-          onClick={loadAdminData}
-          className="btn-secondary py-2 px-3 flex items-center justify-center gap-1.5 text-xs font-bold w-full sm:w-auto"
-        >
-          <RefreshCw className="w-4 h-4 text-slate-500" />
-          Refresh Stats
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setShowCreateUser(true)}
+            className="btn-primary py-2 px-4 flex items-center justify-center gap-1.5 text-xs font-bold w-full sm:w-auto"
+          >
+            <Users className="w-4 h-4" />
+            Create Store User
+          </button>
+          <button
+            onClick={loadAdminData}
+            className="btn-secondary py-2 px-3 flex items-center justify-center gap-1.5 text-xs font-bold w-full sm:w-auto"
+          >
+            <RefreshCw className="w-4 h-4 text-slate-500" />
+            Refresh Stats
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -341,6 +421,15 @@ const AdminPanel = () => {
                               >
                                 {u.isBlocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
                               </button>
+
+                              {/* Delete Button */}
+                              <button
+                                onClick={() => handleDeleteUser(u._id, u.businessName)}
+                                className="p-1.5 rounded-xl border border-red-100 hover:bg-red-50 text-red-500 transition-colors dark:border-red-950/20 dark:hover:bg-red-950/30"
+                                title="Permanently delete merchant"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -423,6 +512,14 @@ const AdminPanel = () => {
                           </>
                         )}
                       </button>
+
+                      <button
+                        onClick={() => handleDeleteUser(u._id, u.businessName)}
+                        className="py-2 px-3 rounded-xl border border-red-100 hover:bg-red-50 text-red-500 transition-colors flex items-center justify-center dark:border-red-950/20 dark:hover:bg-red-950/30 bg-red-50/20"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        <span className="text-xs font-bold">Delete</span>
+                      </button>
                     </div>
                   </div>
                 ))
@@ -430,6 +527,108 @@ const AdminPanel = () => {
             </div>
           </div>
         </>
+      )}
+      {/* ==================== CREATE USER MODAL ==================== */}
+      {showCreateUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 max-w-md w-full space-y-4 animate-scale-in">
+            <div className="flex justify-between items-center">
+              <h3 className="font-black text-slate-800 dark:text-dark-50 text-base">Create Store User</h3>
+              <button onClick={() => setShowCreateUser(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 font-bold">✕</button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Business Name</label>
+                  <input
+                    type="text"
+                    value={newBName}
+                    onChange={(e) => setNewBName(e.target.value)}
+                    className="input-field text-xs py-2"
+                    placeholder="E.g. Verma General Store"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Owner Name</label>
+                  <input
+                    type="text"
+                    value={newOName}
+                    onChange={(e) => setNewOName(e.target.value)}
+                    className="input-field text-xs py-2"
+                    placeholder="E.g. Ramesh Verma"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Phone/Mobile</label>
+                  <input
+                    type="tel"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    className="input-field text-xs py-2"
+                    placeholder="9876543210"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500">Role</label>
+                  <select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value)}
+                    className="input-field text-xs py-2 bg-transparent"
+                  >
+                    <option value="user">User / Merchant</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">Email Address</label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="input-field text-xs py-2"
+                  placeholder="ramesh@vermastores.com"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">Password</label>
+                <input
+                  type="password"
+                  value={newPass}
+                  onChange={(e) => setNewPass(e.target.value)}
+                  className="input-field text-xs py-2"
+                  placeholder="Password"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">Complete Address</label>
+                <input
+                  type="text"
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  className="input-field text-xs py-2"
+                  placeholder="Merchant's business location address"
+                />
+              </div>
+
+              <button type="submit" disabled={creatingUser} className="w-full btn-primary py-2.5 text-xs font-bold">
+                {creatingUser ? 'Creating user...' : 'Create Account'}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
     </div>

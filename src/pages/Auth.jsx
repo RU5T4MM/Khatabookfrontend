@@ -25,6 +25,10 @@ const Auth = () => {
   const [otpMockCode, setOtpMockCode] = useState('');
   const [isNewOtpUser, setIsNewOtpUser] = useState(false);
 
+  // Reset password state
+  const [resetCodeInput, setResetCodeInput] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) return;
@@ -108,9 +112,27 @@ const Auth = () => {
     setLoading(true);
     try {
       const res = await forgotPassword(email);
-      addNotification(`Temporary password sent! Code: ${res.tempPassword}`, 'success');
-      setEmail('');
+      addNotification(`Reset code sent to email! Code: ${res.resetCode}`, 'success');
+      setResetCodeInput(res.resetCode);
+      setMode('reset');
+    } catch (err) {
+      addNotification(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!email || !resetCodeInput || !newPassword) return;
+    setLoading(true);
+    try {
+      await resetPassword(email, resetCodeInput, newPassword);
+      addNotification('Password reset successfully! Log in with your new password.', 'success');
       setMode('login');
+      setPassword('');
+      setNewPassword('');
+      setResetCodeInput('');
     } catch (err) {
       addNotification(err.message, 'error');
     } finally {
@@ -130,6 +152,7 @@ const Auth = () => {
             {mode === 'signup' && 'Create Your Store'}
             {mode === 'otp' && 'OTP Phone Login'}
             {mode === 'forgot' && 'Reset Password'}
+            {mode === 'reset' && 'Enter Reset Code'}
           </h2>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
             {mode === 'login' && 'Sign in to access your ledger'}
@@ -421,7 +444,63 @@ const Auth = () => {
                 Back to Login
               </button>
               <button type="submit" disabled={loading} className="btn-primary flex-1 text-sm">
-                {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Reset Password'}
+                {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Get Reset Code'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ==================== 5. RESET PASSWORD CONFIRM MODE ==================== */}
+        {mode === 'reset' && (
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            {resetCodeInput && (
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 rounded-xl text-xs font-semibold text-emerald-800 dark:text-emerald-500 flex flex-col gap-1">
+                <span>🔑 PASSWORD RESET SIMULATOR:</span>
+                <span>Verification code: <strong className="text-sm tracking-widest">{resetCodeInput}</strong></span>
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500">6-Digit Reset Code</label>
+              <div className="relative">
+                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={resetCodeInput}
+                  onChange={(e) => setResetCodeInput(e.target.value)}
+                  className="input-field pl-11 tracking-wider text-center text-lg font-black"
+                  placeholder="123456"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500">New Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="input-field pl-11"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="btn-secondary flex-1 text-sm"
+              >
+                Cancel
+              </button>
+              <button type="submit" disabled={loading} className="btn-primary flex-1 text-sm">
+                {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Set New Password'}
               </button>
             </div>
           </form>

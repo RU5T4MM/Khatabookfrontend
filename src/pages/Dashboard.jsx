@@ -31,74 +31,51 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     youWillGet: 0,
     youWillGive: 0,
-    netBalance: 0
+    netBalance: 0,
+    totalCustomers: 0
   });
   const [recentTx, setRecentTx] = useState([]);
   const [chartData, setChartData] = useState([]);
+  const [recentCustomers, setRecentCustomers] = useState([]);
 
   // Fetch dashboard summary
   useEffect(() => {
     const loadDashboardData = async () => {
       setLoading(true);
       try {
-        let customerList = [];
-
         if (isOnline) {
-          const res = await fetchWithAuth('/api/customers');
+          const res = await fetchWithAuth('/api/dashboard/summary');
           if (res.ok) {
-            customerList = await res.json();
+            const data = await res.json();
+            setStats({
+              youWillGet: data.totalCredit,
+              youWillGive: data.totalDebit,
+              netBalance: data.netBalance,
+              totalCustomers: data.totalCustomers
+            });
+            setRecentTx(data.recentTransactions || []);
+            setRecentCustomers(data.recentCustomers || []);
+            setChartData(data.chartData || []);
+            
             // Cache locally
-            cacheCustomersOffline(customerList);
+            localStorage.setItem('kb_dashboard_cache', JSON.stringify(data));
           }
         } else {
           // Read cached
-          customerList = await getCachedCustomers();
-        }
-
-        // Calculate credits and debits
-        let willGet = 0;
-        let willGive = 0;
-        customerList.forEach(c => {
-          if (c.totalBalance > 0) {
-            willGet += c.totalBalance;
-          } else if (c.totalBalance < 0) {
-            willGive += Math.abs(c.totalBalance);
+          const cached = localStorage.getItem('kb_dashboard_cache');
+          if (cached) {
+            const data = JSON.parse(cached);
+            setStats({
+              youWillGet: data.totalCredit,
+              youWillGive: data.totalDebit,
+              netBalance: data.netBalance,
+              totalCustomers: data.totalCustomers
+            });
+            setRecentTx(data.recentTransactions || []);
+            setRecentCustomers(data.recentCustomers || []);
+            setChartData(data.chartData || []);
           }
-        });
-
-        const net = willGet - willGive;
-        setStats({
-          youWillGet: willGet,
-          youWillGive: willGive,
-          netBalance: net
-        });
-
-        // Load recent transactions and mock chart trends based on calculations
-        if (isOnline) {
-          // Fetch overall activity
-          const txRes = await fetchWithAuth('/api/expenses'); // fetch expenses just to get date aggregates
-          const txs = [];
-          
-          // Let's create visual transaction aggregates from customers ledger
-          // For visualization, we will construct a mock daily aggregate chart data
-          // using the client transaction dates if possible, or construct nice defaults
-          const mockChart = [
-            { name: 'Mon', CashIn: 4000, CashOut: 2400 },
-            { name: 'Tue', CashIn: 3000, CashOut: 1398 },
-            { name: 'Wed', CashIn: 9800, CashOut: 2000 },
-            { name: 'Thu', CashIn: 2780, CashOut: 3908 },
-            { name: 'Fri', CashIn: 1890, CashOut: 4800 },
-            { name: 'Sat', CashIn: 2390, CashOut: 3800 },
-            { name: 'Sun', CashIn: 3490, CashOut: 4300 }
-          ];
-          setChartData(mockChart);
-        } else {
-          // Offline chart defaults
-          setChartData([
-            { name: 'Offline', CashIn: 0, CashOut: 0 }
-          ]);
         }
-
       } catch (err) {
         console.error('Dashboard loading error:', err);
       } finally {
@@ -149,8 +126,24 @@ const Dashboard = () => {
       </div>
 
       {/* Grid Stats Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
+        {/* Total Customers Card */}
+        <div className="glass-card p-6 bg-slate-50/40 dark:bg-dark-900/40 flex flex-col justify-between min-h-[140px]">
+          <div className="flex justify-between items-start">
+            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Customers</span>
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-500">
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-3xl font-black text-slate-800 dark:text-dark-50">
+              {stats.totalCustomers || 0}
+            </h3>
+            <p className="text-[10px] text-slate-400 font-medium">Registered business clients</p>
+          </div>
+        </div>
+
         {/* Net Balance Card */}
         <div className="glass-card p-6 bg-gradient-to-br from-white to-slate-50/50 dark:from-dark-900 dark:to-dark-900/40 relative overflow-hidden flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
@@ -194,7 +187,7 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-3xl font-black text-rose-500 dark:text-rose-400">
+            <h3 className="text-3xl font-black text-rose-500 dark:text-rose-450">
               ₹{stats.youWillGive.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </h3>
             <p className="text-[10px] text-slate-400 font-medium">Customer advances / Debit to payback</p>
@@ -285,6 +278,89 @@ const Dashboard = () => {
                 <p className="text-[10px] text-slate-400">Export PDF/Excel ledger reports</p>
               </div>
             </Link>
+          </div>
+        </div>
+
+      </div>
+
+      {/* SECTION 2: Recent Transactions Activity & Recent Customers */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Recent Transactions Table */}
+        <div className="glass-card p-6 lg:col-span-2 space-y-4">
+          <div>
+            <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base">Recent Ledger Activity</h3>
+            <p className="text-[10px] text-slate-400 font-semibold uppercase">Latest recorded client entries</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-dark-850 bg-slate-50/30 dark:bg-dark-850/10 text-slate-400 font-black uppercase tracking-wider">
+                  <th className="p-3">Date</th>
+                  <th className="p-3">Customer</th>
+                  <th className="p-3">Description</th>
+                  <th className="p-3 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-dark-850">
+                {recentTx.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-6 text-slate-400 font-semibold uppercase">No recent entries</td>
+                  </tr>
+                ) : (
+                  recentTx.map(tx => {
+                    const isGive = tx.type === 'give';
+                    return (
+                      <tr key={tx._id} className="text-slate-700 dark:text-dark-200">
+                        <td className="p-3 font-medium">{new Date(tx.date).toLocaleDateString()}</td>
+                        <td className="p-3 font-bold text-slate-800 dark:text-dark-50">{tx.customerId?.name || 'Deleted Client'}</td>
+                        <td className="p-3 italic text-slate-400">{tx.description || 'Ledger Log'}</td>
+                        <td className={`p-3 text-right font-black ${isGive ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-500'}`}>
+                          {isGive ? '-' : '+'}₹{tx.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recent Customers List */}
+        <div className="glass-card p-6 space-y-4">
+          <div>
+            <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base">Newly Added Clients</h3>
+            <p className="text-[10px] text-slate-400 font-semibold uppercase">Latest customers in directory</p>
+          </div>
+          <div className="divide-y divide-slate-50 dark:divide-dark-850 max-h-[260px] overflow-y-auto">
+            {recentCustomers.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 font-semibold uppercase text-xs">No customer registers</div>
+            ) : (
+              recentCustomers.map(cust => {
+                const bal = cust.totalBalance;
+                return (
+                  <Link
+                    key={cust._id}
+                    to="/customers"
+                    className="flex items-center justify-between py-2.5 hover:bg-slate-50/50 dark:hover:bg-dark-850/30 rounded-xl transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-500 flex items-center justify-center font-bold text-xs">
+                        {cust.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 dark:text-dark-50 text-xs">{cust.name}</h4>
+                        <p className="text-[9px] text-slate-450 dark:text-dark-400 font-semibold">{cust.phone}</p>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-black ${bal === 0 ? 'text-slate-400' : bal > 0 ? 'text-emerald-600 dark:text-emerald-500' : 'text-rose-500'}`}>
+                      ₹{Math.abs(bal).toLocaleString('en-IN')}
+                    </span>
+                  </Link>
+                );
+              })
+            )}
           </div>
         </div>
 
