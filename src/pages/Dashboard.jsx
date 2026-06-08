@@ -10,7 +10,13 @@ import {
   Plus,
   Receipt,
   FileText,
-  TrendingUp
+  TrendingUp,
+  PhoneCall,
+  Contact,
+  Coins,
+  BookOpen,
+  QrCode,
+  X
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -37,6 +43,12 @@ const Dashboard = () => {
   const [recentTx, setRecentTx] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [recentCustomers, setRecentCustomers] = useState([]);
+
+  // Modal visibility states
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [showEarnModal, setShowEarnModal] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   // Fetch dashboard summary
   useEffect(() => {
@@ -95,7 +107,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <>
+      <div className="space-y-8 animate-fade-in">
       
       {/* Header Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -125,14 +138,94 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Quick Actions Row */}
+      <div className="glass-card-premium p-6 space-y-4">
+        <div>
+          <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base">Quick Utilities & Operations</h3>
+          <p className="text-[10px] text-slate-400 font-semibold uppercase">Quick shortcuts to manage, collect and grow your business</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          {/* Call Reminders */}
+          <button 
+            onClick={() => setShowReminderModal(true)}
+            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:shadow-md hover:-translate-y-1 transition-all group text-center space-y-2"
+          >
+            <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+              <PhoneCall className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-800 dark:text-dark-100 block">Call Reminders</span>
+              <span className="text-[9px] text-slate-400 block mt-0.5">Collect credit balances</span>
+            </div>
+          </button>
+
+          {/* Business Card */}
+          <button 
+            onClick={() => setShowCardModal(true)}
+            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:shadow-md hover:-translate-y-1 transition-all group text-center space-y-2"
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-950/20 text-blue-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+              <Contact className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-800 dark:text-dark-100 block">Business Card</span>
+              <span className="text-[9px] text-slate-400 block mt-0.5">Generate digital card</span>
+            </div>
+          </button>
+
+          {/* Earn Money */}
+          <button 
+            onClick={() => setShowEarnModal(true)}
+            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:shadow-md hover:-translate-y-1 transition-all group text-center space-y-2"
+          >
+            <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-950/20 text-amber-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+              <Coins className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-800 dark:text-dark-100 block">Earn Money</span>
+              <span className="text-[9px] text-slate-400 block mt-0.5">Refer merchant store</span>
+            </div>
+          </button>
+
+          {/* Cash Book */}
+          <button 
+            onClick={() => navigate('/expenses')}
+            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:shadow-md hover:-translate-y-1 transition-all group text-center space-y-2"
+          >
+            <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/20 text-indigo-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-800 dark:text-dark-100 block">Cash Book</span>
+              <span className="text-[9px] text-slate-400 block mt-0.5">Track store cashflows</span>
+            </div>
+          </button>
+
+          {/* Order QR */}
+          <button 
+            onClick={() => setShowQrModal(true)}
+            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:shadow-md hover:-translate-y-1 transition-all group text-center space-y-2"
+          >
+            <div className="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-950/20 text-teal-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+              <QrCode className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-800 dark:text-dark-100 block">Order QR</span>
+              <span className="text-[9px] text-slate-400 block mt-0.5">Receive UPI payments</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* Grid Stats Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* Total Customers Card */}
-        <div className="glass-card p-6 bg-slate-50/40 dark:bg-dark-900/40 flex flex-col justify-between min-h-[140px]">
+        <div className="glass-card-premium p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total Customers</span>
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-500">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Customers</span>
+            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-550 shadow-inner">
               <Users className="w-5 h-5" />
             </div>
           </div>
@@ -140,15 +233,16 @@ const Dashboard = () => {
             <h3 className="text-3xl font-black text-slate-800 dark:text-dark-50">
               {stats.totalCustomers || 0}
             </h3>
-            <p className="text-[10px] text-slate-400 font-medium">Registered business clients</p>
+            <p className="text-[10px] text-slate-405 font-semibold uppercase">Registered business clients</p>
           </div>
         </div>
 
         {/* Net Balance Card */}
-        <div className="glass-card p-6 bg-gradient-to-br from-white to-slate-50/50 dark:from-dark-900 dark:to-dark-900/40 relative overflow-hidden flex flex-col justify-between min-h-[140px]">
+        <div className="glass-card-premium p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[140px] relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/[0.02] rounded-full blur-xl pointer-events-none"></div>
           <div className="flex justify-between items-start">
-            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.totalBalance}</span>
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-500">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.totalBalance}</span>
+            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-500 shadow-inner">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
@@ -158,15 +252,15 @@ const Dashboard = () => {
             }`}>
               ₹{stats.netBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </h3>
-            <p className="text-[10px] text-slate-400 font-medium">Net outstanding ledger balance</p>
+            <p className="text-[10px] text-slate-405 font-semibold uppercase">Net outstanding balance</p>
           </div>
         </div>
 
         {/* You Will Get Card */}
-        <div className="glass-card p-6 border-emerald-100 bg-emerald-500/[0.02] dark:border-emerald-950/30 flex flex-col justify-between min-h-[140px]">
+        <div className="glass-card-premium p-6 border-l-4 border-l-emerald-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest">{t.youWillGet}</span>
-            <div className="p-2 rounded-xl bg-emerald-100/50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-500">
+            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest">{t.youWillGet}</span>
+            <div className="p-2.5 rounded-xl bg-emerald-100/50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-550 shadow-inner">
               <ArrowUpRight className="w-5 h-5" />
             </div>
           </div>
@@ -174,15 +268,15 @@ const Dashboard = () => {
             <h3 className="text-3xl font-black text-emerald-600 dark:text-emerald-500">
               ₹{stats.youWillGet.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </h3>
-            <p className="text-[10px] text-slate-400 font-medium">Credited Udhaar amount to collect</p>
+            <p className="text-[10px] text-slate-405 font-semibold uppercase">Udhaar amount to collect</p>
           </div>
         </div>
 
         {/* You Will Give Card */}
-        <div className="glass-card p-6 border-rose-100 bg-rose-500/[0.02] dark:border-rose-950/30 flex flex-col justify-between min-h-[140px]">
+        <div className="glass-card-premium p-6 border-l-4 border-l-rose-550 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-black text-rose-600 dark:text-rose-500 uppercase tracking-widest">{t.youWillGive}</span>
-            <div className="p-2 rounded-xl bg-rose-100/50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-500">
+            <span className="text-[10px] font-black text-rose-600 dark:text-rose-500 uppercase tracking-widest">{t.youWillGive}</span>
+            <div className="p-2.5 rounded-xl bg-rose-100/50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-550 shadow-inner">
               <ArrowDownLeft className="w-5 h-5" />
             </div>
           </div>
@@ -190,7 +284,7 @@ const Dashboard = () => {
             <h3 className="text-3xl font-black text-rose-500 dark:text-rose-450">
               ₹{stats.youWillGive.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </h3>
-            <p className="text-[10px] text-slate-400 font-medium">Customer advances / Debit to payback</p>
+            <p className="text-[10px] text-slate-405 font-semibold uppercase">Customer debit to payback</p>
           </div>
         </div>
 
@@ -367,6 +461,183 @@ const Dashboard = () => {
       </div>
 
     </div>
+
+      {/* ==================== MODAL: UPI QR PAYMENT ==================== */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in no-print">
+          <div className="bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 max-w-sm w-full space-y-5 shadow-2xl relative">
+            <button 
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-center space-y-1 pt-2">
+              <div className="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-950/20 text-teal-605 flex items-center justify-center text-lg font-bold mx-auto shadow-inner">₹</div>
+              <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base mt-2">{user?.businessName || "Nahid Group Store"}</h3>
+              <p className="text-[10px] text-slate-405 font-bold uppercase tracking-wider">Direct UPI Payment QR</p>
+            </div>
+            
+            <div className="bg-slate-50 dark:bg-dark-850 p-4 rounded-2xl flex flex-col items-center border border-dashed border-slate-200 dark:border-dark-800">
+              <div className="bg-white p-3 rounded-xl shadow-md relative border border-slate-100">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=groupnahid@okaxis&pn=${user?.businessName || "Nahid Group"}&cu=INR`)}`} 
+                  alt="UPI Payment QR Code"
+                  className="w-44 h-44"
+                />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center shadow-md">
+                  N
+                </div>
+              </div>
+              <span className="text-[9px] text-slate-400 mt-3.5 font-bold uppercase tracking-wide">Scan via PhonePe, GPay, Paytm or UPI Apps</span>
+            </div>
+
+            <div className="flex gap-2">
+              <button 
+                onClick={() => window.print()}
+                className="btn-primary w-full text-xs font-bold py-2.5"
+              >
+                Print QR Code Poster
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== MODAL: DIGITAL BUSINESS CARD ==================== */}
+      {showCardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl relative no-print">
+            <button 
+              onClick={() => setShowCardModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base">Digital Business Card</h3>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Ready-to-print merchant card profile</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 rounded-2xl border border-emerald-500/20 text-white relative overflow-hidden shadow-xl min-h-[190px] flex flex-col justify-between select-none">
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl"></div>
+              
+              <div className="flex justify-between items-start">
+                <div className="space-y-0.5">
+                  <h4 className="text-base font-extrabold tracking-wide">{user?.businessName || "Nahid Group Merchant"}</h4>
+                  <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest block">Digital Khata Member</span>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-emerald-500 text-white font-extrabold flex items-center justify-center text-sm shadow-md">
+                  N
+                </div>
+              </div>
+
+              <div className="space-y-1 pt-5">
+                <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider block">Owner & Proprietor</span>
+                <span className="text-sm font-extrabold block text-slate-100">{user?.ownerName || "Merchant Partner"}</span>
+              </div>
+
+              <div className="flex justify-between items-end border-t border-white/5 pt-3 mt-4 text-[9px] text-slate-400 font-semibold">
+                <div className="space-y-0.5">
+                  <span>📞 +91 {user?.phone || "9999999999"}</span>
+                  <span className="block">✉️ {user?.email || "merchant@nahidgroup.com"}</span>
+                </div>
+                <span className="text-[8px] font-bold text-slate-500">AES-256 Cloud Sync</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button 
+                onClick={() => window.print()}
+                className="btn-primary flex-1 text-xs font-bold py-2.5"
+              >
+                Print Card
+              </button>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(`Business Name: ${user?.businessName || "Nahid Group Store"}\nOwner: ${user?.ownerName}\nPhone: ${user?.phone}\nEmail: ${user?.email}`);
+                  addNotification("Merchant profile details copied!", "success");
+                }}
+                className="btn-secondary flex-1 text-xs font-bold py-2.5"
+              >
+                Copy Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== MODAL: REFER & EARN ==================== */}
+      {showEarnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in no-print">
+          <div className="bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl relative">
+            <button 
+              onClick={() => setShowEarnModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-center space-y-3 pt-2">
+              <div className="w-14 h-14 rounded-full bg-amber-50 dark:bg-amber-950/20 text-amber-500 flex items-center justify-center text-2xl mx-auto shadow-inner">💰</div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base">Earn Referral Cashbacks</h3>
+                <p className="text-[10px] text-slate-400 font-semibold uppercase">Invite merchant stores to Nahid Group</p>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-dark-300 leading-relaxed px-2">
+                Earn up to <strong>₹150 cashback</strong> for every shop owner who signs up using your link and uploads their first credit customer transaction.
+              </p>
+            </div>
+
+            <div className="p-3 bg-slate-50 dark:bg-dark-850 rounded-2xl border border-dashed border-slate-200 dark:border-dark-800 flex items-center justify-between text-xs font-bold gap-3">
+              <span className="text-slate-500 dark:text-dark-300 truncate">https://ledger.nahidgroup.com/ref?code=NH983</span>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText("https://ledger.nahidgroup.com/ref?code=NH983");
+                  addNotification("Referral link copied!", "success");
+                }}
+                className="px-3.5 py-1.5 bg-emerald-500 text-white rounded-xl text-[10px] shrink-0 hover:bg-emerald-600 active:scale-95 transition-all shadow-md shadow-emerald-500/10"
+              >
+                Copy Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== MODAL: REMINDERS GUIDE ==================== */}
+      {showReminderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in no-print">
+          <div className="bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl relative">
+            <button 
+              onClick={() => setShowReminderModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 text-slate-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-center space-y-3 pt-2">
+              <div className="w-14 h-14 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-500 flex items-center justify-center text-2xl mx-auto shadow-inner">📞</div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-slate-800 dark:text-dark-50 text-base">Call & WhatsApp Reminders</h3>
+                <p className="text-[10px] text-slate-400 font-semibold uppercase">Collect credit balances from customers</p>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-dark-300 leading-relaxed px-2">
+                Go to the <strong>Customer Ledger</strong> section, select a customer with pending outstanding balances, and click the **WhatsApp Reminder icon** to instantly send prefilled payment reminders.
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => {
+                setShowReminderModal(false);
+                navigate('/customers');
+              }}
+              className="w-full btn-primary py-2.5 text-xs font-bold mt-2"
+            >
+              Go to Customers List
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

@@ -457,10 +457,23 @@ const Invoices = () => {
               <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : invoices.length === 0 ? (
-            <div className="glass-card p-12 text-center space-y-4">
-              <FileText className="w-12 h-12 text-slate-350 mx-auto" />
-              <h4 className="font-bold text-slate-600 text-sm">No Invoice Records Saved</h4>
-              <p className="text-xs text-slate-400">Spawn your first professional tax document via the editor.</p>
+            <div className="glass-card-premium p-12 text-center space-y-4 max-w-md mx-auto">
+              <div className="w-28 h-28 mx-auto animate-float-medium">
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  {/* Printer base */}
+                  <rect x="15" y="45" width="70" height="30" rx="8" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="1.5" />
+                  <rect x="25" y="30" width="50" height="20" rx="4" fill="#94a3b8" />
+                  {/* Paper sheet printing out */}
+                  <rect x="30" y="40" width="40" height="40" rx="3" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1.5" />
+                  <line x1="38" y1="52" x2="62" y2="52" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                  <line x1="38" y1="62" x2="56" y2="62" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="38" y1="70" x2="50" y2="70" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                  {/* Glowing light indicator */}
+                  <circle cx="25" cy="60" r="3" fill="#10b981" className="animate-pulse" />
+                </svg>
+              </div>
+              <h4 className="font-extrabold text-slate-800 dark:text-dark-100 text-sm">No Invoice Records Saved</h4>
+              <p className="text-xs text-slate-400 max-w-xs mx-auto">Spawn your first professional tax document via the new invoice editor. Download PDFs or print directly.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

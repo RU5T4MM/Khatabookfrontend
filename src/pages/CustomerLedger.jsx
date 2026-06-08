@@ -664,10 +664,29 @@ const CustomerLedger = () => {
             </div>
           </>
         ) : (
-          <div className="text-center space-y-2">
-            <Users className="w-12 h-12 text-slate-300 dark:text-dark-700 mx-auto" />
-            <h4 className="font-bold text-slate-500 text-sm">No Customer Selected</h4>
-            <p className="text-xs text-slate-400">Select a merchant client on the left grid to check ledger logs.</p>
+          <div className="text-center space-y-4 max-w-sm px-6">
+            <div className="w-36 h-36 mx-auto animate-float-slow">
+              <svg viewBox="0 0 120 120" className="w-full h-full">
+                <rect x="20" y="34" width="80" height="64" rx="14" fill="url(#folderGrad)" stroke="#e2e8f0" strokeWidth="1.5"/>
+                <rect x="36" y="24" width="48" height="14" rx="6" fill="#10b981" />
+                {/* Floating graphic elements */}
+                <circle cx="20" cy="24" r="5" fill="#fbbf24" className="animate-float-medium" />
+                <circle cx="98" cy="42" r="6" fill="#34d399" />
+                <circle cx="94" cy="94" r="4.5" fill="#f87171" />
+                {/* Document lines */}
+                <line x1="38" y1="52" x2="82" y2="52" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="38" y1="66" x2="72" y2="66" stroke="#cbd5e1" strokeWidth="3" strokeLinecap="round"/>
+                <line x1="38" y1="80" x2="60" y2="80" stroke="#cbd5e1" strokeWidth="3" strokeLinecap="round"/>
+                <defs>
+                  <linearGradient id="folderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff"/>
+                    <stop offset="100%" stopColor="#f8fafc"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h4 className="font-extrabold text-slate-800 dark:text-dark-100 text-sm">{t.noCustomerSelected || "No Customer Selected"}</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">Select a merchant client on the left grid list to review dates, balances, attachments, and payment reminder links.</p>
           </div>
         )}
       </div>
